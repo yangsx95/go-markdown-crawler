@@ -49,7 +49,7 @@ func newWordpressPageIterator(protocol string, domain string, basepath string, p
 }
 
 func (wpi *wordpressPageIterator) NextPage() ([]byte, error) {
-	wpi.currentPage++
+	wpi.currentPage = wpi.currentPage + 1
 	u := util.GenFullRequestUrl(wpi.protocol, wpi.domain, wpi.basepath, wpi.path,
 		map[string]string{
 			"per_page": strconv.Itoa(wpi.perPage),
@@ -160,7 +160,7 @@ type wordpressContent struct {
 }
 
 type WordpressArticleIterator struct {
-	iterator wordpressPageIterator
+	iterator *wordpressPageIterator
 }
 
 func NewWordpressArticleIterator(protocol string, domain string, basepath string) (WordpressArticleIterator, error) {
@@ -168,7 +168,7 @@ func NewWordpressArticleIterator(protocol string, domain string, basepath string
 	if err != nil {
 		return WordpressArticleIterator{}, err
 	}
-	return WordpressArticleIterator{iterator: iterator}, nil
+	return WordpressArticleIterator{iterator: &iterator}, nil
 }
 
 func (wai WordpressArticleIterator) HasNext() bool {
