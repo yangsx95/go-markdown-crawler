@@ -30,11 +30,13 @@ type wordpressPageIterator struct {
 	path     string
 	// 总条数
 	totalCount int
-	// 当前读取到的条数
-	currentIndex int
+	// 每页条数
+	perPage int
+	// 当前读取到的页数
+	currentPage int
 }
 
-func newWordpressPageIterator(protocol string, domain string, basepath string, path string) (wordpressPageIterator, error) {
+func newWordpressPageIterator(protocol string, domain string, basepath string, path string, perPage int) (wordpressPageIterator, error) {
 	u := util.GenFullRequestUrl(protocol, domain, basepath, path, map[string]string{"per_page": "1"})
 	resp, err := http.Get(u)
 	if err != nil {
@@ -43,16 +45,16 @@ func newWordpressPageIterator(protocol string, domain string, basepath string, p
 	defer util.FastClose(resp.Body)
 	// 总条数
 	totalCount, _ := strconv.Atoi(resp.Header.Get("X-WP-Total"))
-	return wordpressPageIterator{protocol, domain, basepath, path, totalCount, 0}, nil
+	return wordpressPageIterator{protocol, domain, basepath, path, totalCount, perPage, 0}, nil
 }
 
-func (wpi *wordpressPageIterator) Next() ([]byte, error) {
-	return wpi.NextMulti(1)
-}
-
-func (wpi *wordpressPageIterator) NextMulti(count int) ([]byte, error) {
+func (wpi *wordpressPageIterator) NextPage() ([]byte, error) {
+	wpi.currentPage++
 	u := util.GenFullRequestUrl(wpi.protocol, wpi.domain, wpi.basepath, wpi.path,
-		map[string]string{"offset": strconv.Itoa(wpi.currentIndex), "per_page": strconv.Itoa(count)})
+		map[string]string{
+			"per_page": strconv.Itoa(wpi.perPage),
+			"page":     strconv.Itoa(wpi.currentPage),
+		})
 	resp, err := http.Get(u)
 	if err != nil {
 		return nil, err
@@ -62,22 +64,21 @@ func (wpi *wordpressPageIterator) NextMulti(count int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	wpi.currentIndex = wpi.currentIndex + count
 	return bys, nil
 }
 
 func (wpi *wordpressPageIterator) HasNext() bool {
-	return wpi.currentIndex < wpi.totalCount
+	return wpi.currentPage < wpi.totalCount/wpi.perPage
 }
 
 func (wp *wordpressProvider) GetAllCategories() (Categories, error) {
 	categories := make(Categories, 0)
-	iterator, err := newWordpressPageIterator(wp.protocol, wp.domain, wp.basepath, "/categories")
+	iterator, err := newWordpressPageIterator(wp.protocol, wp.domain, wp.basepath, "/categories", 10)
 	if err != nil {
 		return nil, err
 	}
 	for iterator.HasNext() {
-		bys, err := iterator.NextMulti(10)
+		bys, err := iterator.NextPage()
 		if err != nil {
 			return nil, err
 		}
@@ -95,12 +96,12 @@ func (wp *wordpressProvider) GetAllCategories() (Categories, error) {
 
 func (wp *wordpressProvider) GetAllTags() (Tags, error) {
 	tags := make(Tags, 0)
-	iterator, err := newWordpressPageIterator(wp.protocol, wp.domain, wp.basepath, "/tags")
+	iterator, err := newWordpressPageIterator(wp.protocol, wp.domain, wp.basepath, "/tags", 100)
 	if err != nil {
 		return nil, err
 	}
 	for iterator.HasNext() {
-		bys, err := iterator.NextMulti(10)
+		bys, err := iterator.NextPage()
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +164,7 @@ type WordpressArticleIterator struct {
 }
 
 func NewWordpressArticleIterator(protocol string, domain string, basepath string) (WordpressArticleIterator, error) {
-	iterator, err := newWordpressPageIterator(protocol, domain, basepath, "/posts")
+	iterator, err := newWordpressPageIterator(protocol, domain, basepath, "/posts", 1)
 	if err != nil {
 		return WordpressArticleIterator{}, err
 	}
@@ -175,26 +176,19 @@ func (wai WordpressArticleIterator) HasNext() bool {
 }
 
 func (wai WordpressArticleIterator) Next() (Article, error) {
-	articles, err := wai.NextMulti(1)
+	bys, err := wai.iterator.NextPage()
 	if err != nil {
-		return Article{}, nil
-	}
-	return articles[0], nil
-}
-
-func (wai WordpressArticleIterator) NextMulti(count int) (Articles, error) {
-	bys, err := wai.iterator.NextMulti(count)
-	if err != nil {
-		return nil, err
+		return Article{}, err
 	}
 	wArticles := make([]wordpressArticle, 0)
 	err = json.Unmarshal(bys, &wArticles)
 	if err != nil {
-		return nil, err
+		return Article{}, err
 	}
 	if len(wArticles) == 0 {
-		return nil, nil
+		return Article{}, err
 	}
+
 	articles := make(Articles, 0)
 	for _, wArticle := range wArticles {
 		aDate, _ := time.Parse("2006-01-02T15:04:05", wArticle.Date)
@@ -207,6 +201,5 @@ func (wai WordpressArticleIterator) NextMulti(count int) (Articles, error) {
 			wArticle.Tags}
 		articles = append(articles, article)
 	}
-
-	return articles, nil
+	return articles[0], nil
 }

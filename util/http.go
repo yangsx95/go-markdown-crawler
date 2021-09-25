@@ -34,10 +34,8 @@ func FastClose(closer io.Closer) {
 
 // PageReaderIterator 分页读取迭代器
 type PageReaderIterator interface {
-	// Next 读取下面一条
-	Next() ([]byte, error)
-	// NextMulti 读取下面多条
-	NextMulti(count int) ([]byte, error)
-	// HasNext 是否有下一条
+	// NextPage 读取下一页
+	NextPage() ([]byte, error)
+	// HasNext 是否有下一页面
 	HasNext() bool
 }

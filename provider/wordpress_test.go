@@ -13,6 +13,7 @@ func TestWordpressProvider_GetAllCategories(t *testing.T) {
 	provider := NewWordpressProvider("http", "yangsx95.com")
 	cts, _ := provider.GetAllCategories()
 	fmt.Println(cts)
+	fmt.Println(len(cts))
 }
 
 func TestWordpressProvider_GetAllTags(t *testing.T) {
@@ -28,14 +29,11 @@ func TestWordpressProvider_GetArticleIterator(t *testing.T) {
 		panic(err)
 	}
 	if iterator.HasNext() {
-		multi, err := iterator.NextMulti(3)
+		atc, err := iterator.Next()
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(multi)
-		if len(multi) != 3 {
-			_ = fmt.Errorf("返回文章数量%v不是预期值%v\n", len(multi), 3)
-		}
+		fmt.Println(atc)
 	}
 
 }

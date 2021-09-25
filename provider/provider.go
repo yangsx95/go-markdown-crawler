@@ -86,5 +86,4 @@ type Articles []Article
 type ArticleIterator interface {
 	HasNext() bool
 	Next() (Article, error)
-	NextMulti(count int) (Articles, error)
 }
