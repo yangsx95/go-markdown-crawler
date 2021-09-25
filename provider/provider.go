@@ -15,7 +15,7 @@ type Provider interface {
 	GetAllTags() (Tags, error)
 
 	// GetArticleIterator 获取文章迭代器
-	GetArticleIterator() ArticleIterator
+	GetArticleIterator() (ArticleIterator, error)
 }
 
 // Category 分类
@@ -71,12 +71,12 @@ func (ts *Tags) GetTagById(id int) (Tag, bool) {
 type Article struct {
 	Id          int
 	Date        time.Time
-	Status      string
 	Link        string
-	Title       wordpressTitle
-	Content     wordpressContent
+	Title       string
+	Content     string
+	ContentType string
 	CategoryIds []int
-	TagIds      []interface{}
+	TagIds      []int
 }
 
 // Articles 多篇文章
@@ -84,7 +84,7 @@ type Articles []Article
 
 // ArticleIterator 文章迭代器
 type ArticleIterator interface {
-	HashNex() (bool, error)
+	HasNext() bool
 	Next() (Article, error)
-	NextFor(count int) (Articles, error)
+	NextMulti(count int) (Articles, error)
 }
