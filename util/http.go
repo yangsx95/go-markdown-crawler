@@ -31,3 +31,13 @@ func GenFullRequestUrl(protocal string, domain string, basepath string, path str
 func FastClose(closer io.Closer) {
 	_ = closer.Close()
 }
+
+// PageReaderIterator 分页读取迭代器
+type PageReaderIterator interface {
+	// Next 读取下面一条
+	Next() ([]byte, error)
+	// NextMulti 读取下面多条
+	NextMulti(count int) ([]byte, error)
+	// HasNext 是否有下一条
+	HasNext() bool
+}

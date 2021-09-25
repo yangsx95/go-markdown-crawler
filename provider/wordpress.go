@@ -2,7 +2,6 @@ package provider
 
 import (
 	"encoding/json"
-	"fmt"
 	"go-markdown-crawler/util"
 	"io/ioutil"
 	"net/http"
@@ -10,44 +9,77 @@ import (
 )
 
 type wordpressProvider struct {
-	protocal string
+	protocol string
 	domain   string
 	basepath string
 }
 
-func NewWordpressProvider(protocal string, domain string) Provider {
-	return &wordpressProvider{protocal, domain, "/wp-json/wp/v2"}
+func NewWordpressProvider(protocol string, domain string) Provider {
+	return &wordpressProvider{protocol, domain, "/wp-json/wp/v2"}
 }
 
 func (wp *wordpressProvider) AuthWithUsernameAndPassword(username string, password string) {
 
 }
 
+type wordpressPageIterator struct {
+	protocol string
+	domain   string
+	baseurl  string
+	path     string
+	// 总条数
+	totalCount int
+	// 当前读取到的条数
+	currentIndex int
+}
+
+func newWordpressPageIterator(protocol string, domain string, baseurl string, path string) (wordpressPageIterator, error) {
+	u := util.GenFullRequestUrl(protocol, domain, baseurl, path, map[string]string{"per_page": "1"})
+	resp, err := http.Get(u)
+	if err != nil {
+		return wordpressPageIterator{}, err
+	}
+	defer util.FastClose(resp.Body)
+	// 总条数
+	totalCount, _ := strconv.Atoi(resp.Header.Get("X-WP-Total"))
+	return wordpressPageIterator{protocol, domain, baseurl, path, totalCount, 0}, nil
+}
+
+func (wpi *wordpressPageIterator) Next() ([]byte, error) {
+	return wpi.NextMulti(1)
+}
+
+func (wpi *wordpressPageIterator) NextMulti(count int) ([]byte, error) {
+	u := util.GenFullRequestUrl(wpi.protocol, wpi.domain, wpi.baseurl, wpi.path,
+		map[string]string{"offset": strconv.Itoa(wpi.currentIndex), "per_page": strconv.Itoa(count)})
+	resp, err := http.Get(u)
+	if err != nil {
+		return nil, err
+	}
+	defer util.FastClose(resp.Body)
+	bys, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	wpi.currentIndex = wpi.currentIndex + count
+	return bys, nil
+}
+
+func (wpi *wordpressPageIterator) HasNext() bool {
+	return wpi.currentIndex < wpi.totalCount
+}
+
 func (wp *wordpressProvider) GetAllCategories() (Categories, error) {
-	totalCount := 0
-	totalPage := 0
-	pageIndex := 1
 	categories := make(Categories, 0)
-	for {
-		u := util.GenFullRequestUrl(wp.protocal, wp.domain, wp.basepath, "/categories",
-			map[string]string{"page": strconv.Itoa(pageIndex), "per_page": "10"})
-		resp, err := http.Get(u)
+	iterator, err := newWordpressPageIterator(wp.protocol, wp.domain, wp.basepath, "/categories")
+	if err != nil {
+		return nil, err
+	}
+	for iterator.HasNext() {
+		bys, err := iterator.NextMulti(10)
 		if err != nil {
 			return nil, err
 		}
-		bys, err := ioutil.ReadAll(resp.Body)
-		util.FastClose(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		// 总条数
-		totalCount, _ = strconv.Atoi(resp.Header.Get("X-WP-Total"))
-		// 总页数
-		totalPage, _ = strconv.Atoi(resp.Header.Get("X-WP-TotalPages"))
-
-		fmt.Printf("请求wordpress分类信息完成，总页数%v，总条数%v，当前页数%v\n", totalPage, totalCount, pageIndex)
-
 		result := make([]wordpressCategory, 0)
 		err = json.Unmarshal(bys, &result)
 		if err != nil {
@@ -56,40 +88,21 @@ func (wp *wordpressProvider) GetAllCategories() (Categories, error) {
 		for _, v := range result {
 			categories = append(categories, Category{v.ID, v.Name, v.Slug, v.Description, v.Link, v.Parent})
 		}
-
-		if pageIndex >= totalPage {
-			break
-		}
-		pageIndex++
 	}
 	return categories, nil
 }
 
 func (wp *wordpressProvider) GetAllTags() (Tags, error) {
-	totalCount := 0
-	totalPage := 0
-	pageIndex := 1
 	tags := make(Tags, 0)
-	for {
-		u := util.GenFullRequestUrl(wp.protocal, wp.domain, wp.basepath, "/tags",
-			map[string]string{"page": strconv.Itoa(pageIndex), "per_page": "10"})
-		resp, err := http.Get(u)
+	iterator, err := newWordpressPageIterator(wp.protocol, wp.domain, wp.basepath, "/tags")
+	if err != nil {
+		return nil, err
+	}
+	for iterator.HasNext() {
+		bys, err := iterator.NextMulti(10)
 		if err != nil {
 			return nil, err
 		}
-		bys, err := ioutil.ReadAll(resp.Body)
-		util.FastClose(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		// 总条数
-		totalCount, _ = strconv.Atoi(resp.Header.Get("X-WP-Total"))
-		// 总页数
-		totalPage, _ = strconv.Atoi(resp.Header.Get("X-WP-TotalPages"))
-
-		fmt.Printf("请求wordpress标签信息完成，总页数%v，总条数%v，当前页数%v\n", totalPage, totalCount, pageIndex)
-
 		result := make([]wordpressTag, 0)
 		err = json.Unmarshal(bys, &result)
 		if err != nil {
@@ -98,11 +111,6 @@ func (wp *wordpressProvider) GetAllTags() (Tags, error) {
 		for _, v := range result {
 			tags = append(tags, Tag{v.ID, v.Description, v.Name})
 		}
-
-		if pageIndex >= totalPage {
-			break
-		}
-		pageIndex++
 	}
 	return tags, nil
 }
