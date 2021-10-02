@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"fmt"
+	"go-markdown-crawler/converter"
 	"go-markdown-crawler/provider"
 	"go-markdown-crawler/util"
 	"io/ioutil"
@@ -33,6 +34,9 @@ func NewFileExporter(provider provider.Provider, path string) (CategoryFileExpor
 }
 
 func (fe *CategoryFileExporter) export() error {
+	defer func() {
+
+	}()
 	categories, err := fe.provider.GetAllCategories()
 	if err != nil {
 		return err
@@ -42,19 +46,27 @@ func (fe *CategoryFileExporter) export() error {
 		fe.mkdir(categories, category)
 	}
 	fmt.Printf("根据wordpress分类创建目录成功 \n")
-	aiterator, err := fe.provider.GetArticleIterator()
+	aIterator, err := fe.provider.GetArticleIterator()
 	if err != nil {
 		return err
 	}
 	fmt.Printf("准备进行文章读取~\n")
-	for aiterator.HasNext() {
-		next, err := aiterator.Next()
+	for aIterator.HasNext() {
+		next, err := aIterator.Next()
+		fmt.Printf("开始处理wordpress文章，目标文章 %v, 目标地址 %v \n", next.Title, next.Link)
 		if err != nil {
 			fmt.Printf("处理wordpress文章失败，目标文章 %v, 目标地址 %v, 错误信息 %v\n", next.Title, next.Link, err)
 		}
 		path, ok := fe.categoryIdFilePathMap[next.CategoryIds[0]]
 		if ok { // 找到路径的文章
-			err = ioutil.WriteFile(filepath.Join(path, next.Title+".html"), []byte(next.Content), 0777)
+			// 将目标转换为markdown文本
+			htmlConv := converter.NewConverter(converter.GetContentTypeByString(next.ContentType))
+			markdown, err := htmlConv.Convert([]byte(next.Content))
+			if err != nil {
+				return err
+			}
+			// 写入markdown文本
+			err = ioutil.WriteFile(filepath.Join(path, next.Title+".md"), markdown, 0777)
 		}
 		if err != nil {
 			fmt.Printf("处理wordpress文章失败，目标文章 %v, 目标地址 %v, 错误信息 %v\n", next.Title, next.Link, err)
