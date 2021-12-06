@@ -33,24 +33,27 @@ func NewFileExporter(provider provider.Provider, path string) (CategoryFileExpor
 	return CategoryFileExporter{provider: provider, path: absPath, categoryIdFilePathMap: m}, err
 }
 
-func (fe *CategoryFileExporter) export() error {
+func (fe *CategoryFileExporter) export() (err error) {
 	defer func() {
 
 	}()
-	categories, err := fe.provider.GetAllCategories()
-	if err != nil {
-		return err
+	var categories provider.Categories
+	if categories, err = fe.provider.GetAllCategories(); err != nil {
+		return
 	}
 	fmt.Printf("读取wordpress分类信息成功\n")
+
 	for _, category := range categories {
 		fe.mkdir(categories, category)
 	}
 	fmt.Printf("根据wordpress分类创建目录成功 \n")
-	aIterator, err := fe.provider.GetArticleIterator()
-	if err != nil {
-		return err
+
+	var aIterator provider.ArticleIterator
+	if aIterator, err = fe.provider.GetArticleIterator(); err != nil {
+		return
 	}
 	fmt.Printf("准备进行文章读取~\n")
+
 	for aIterator.HasNext() {
 		next, err := aIterator.Next()
 		fmt.Printf("开始处理wordpress文章，目标文章 %v, 目标地址 %v \n", next.Title, next.Link)
