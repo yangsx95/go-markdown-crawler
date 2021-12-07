@@ -7,6 +7,7 @@ import (
 	"go-markdown-crawler/util"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 )
 
 type CategoryFileExporter struct {
@@ -63,7 +64,11 @@ func (fe *CategoryFileExporter) export() (err error) {
 		path, ok := fe.categoryIdFilePathMap[next.CategoryIds[0]]
 		if ok { // 找到路径的文章
 			// 将目标转换为markdown文本
-			htmlConv := converter.NewConverter(converter.GetContentTypeByString(next.ContentType))
+			htmlConv := converter.NewConverter(converter.GetContentTypeByString(next.ContentType), &converter.Option{
+				SaveImgToLocal:  true,
+				MarkdownPath:    path,
+				ImgRelativePath: strings.TrimSpace(next.Title) + ".assets",
+			})
 			markdown, err := htmlConv.Convert([]byte(next.Content))
 			if err != nil {
 				return err
