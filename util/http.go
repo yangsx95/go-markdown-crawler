@@ -63,6 +63,15 @@ var ContentDispositionStrategy FileNameStrategy = func(url string, resp *http.Re
 	return
 }
 
+var UrlStrategy FileNameStrategy = func(u string, resp *http.Response) (filename string, err error) {
+	var uu *url.URL
+	if uu, err = url.Parse(u); err != nil {
+		return
+	}
+	filename = filepath.Base(uu.Path)
+	return
+}
+
 func DownloadFile(url, path string, strategy FileNameStrategy) (f *os.File, err error) {
 	var resp *http.Response
 	if resp, err = http.Get(url); err != nil {

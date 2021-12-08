@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"fmt"
 	"github.com/yangsx95/md-crawler/util"
 	"os"
 	"path/filepath"
@@ -33,7 +34,8 @@ func (hc *CommonHtml2MdConverter) Convert(data []byte) (markdown []byte, err err
 			}
 
 			var f *os.File
-			if f, err = util.DownloadFile(src, filepath.Join(hc.Option.MarkdownPath, hc.Option.ImgRelativePath), util.ContentDispositionStrategy); err != nil {
+			if f, err = util.DownloadFile(src, filepath.Join(hc.Option.MarkdownPath, hc.Option.ImgRelativePath), util.UrlStrategy); err != nil {
+				fmt.Printf("下载文件出错 src=%v，错误信息 %v\n", src, err)
 				return md.String("![" + alt + "](" + src + ")")
 			}
 
