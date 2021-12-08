@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-markdown-crawler/cmd"
+	"github.com/yangsx95/md-crawler/cmd"
 )
 
 func main() {

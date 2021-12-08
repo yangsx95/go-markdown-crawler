@@ -1,7 +1,7 @@
 package converter
 
 import (
-	"go-markdown-crawler/util"
+	"github.com/yangsx95/md-crawler/util"
 	"os"
 	"path/filepath"
 

@@ -2,7 +2,7 @@ package provider
 
 import (
 	"encoding/json"
-	"go-markdown-crawler/util"
+	"github.com/yangsx95/md-crawler/util"
 	"io/ioutil"
 	"net/http"
 	"strconv"

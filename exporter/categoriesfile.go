@@ -2,9 +2,9 @@ package exporter
 
 import (
 	"fmt"
-	"go-markdown-crawler/converter"
-	"go-markdown-crawler/provider"
-	"go-markdown-crawler/util"
+	"github.com/yangsx95/md-crawler/converter"
+	"github.com/yangsx95/md-crawler/provider"
+	"github.com/yangsx95/md-crawler/util"
 	"io/ioutil"
 	"path/filepath"
 	"strings"

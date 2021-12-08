@@ -2,7 +2,7 @@ package exporter
 
 import (
 	"fmt"
-	"go-markdown-crawler/provider"
+	"github.com/yangsx95/md-crawler/provider"
 	"testing"
 )
 

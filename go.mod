@@ -1,4 +1,4 @@
-module go-markdown-crawler
+module github.com/yangsx95/md-crawler
 
 go 1.17
 
