@@ -19,22 +19,22 @@ type CategoryFileExporter struct {
 	provider provider.Provider
 }
 
-func NewFileExporter(provider provider.Provider, path string) (CategoryFileExporter, error) {
+func NewFileExporter(provider provider.Provider, path string) (*CategoryFileExporter, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return CategoryFileExporter{}, err
+		return &CategoryFileExporter{}, err
 	}
 
 	err = util.MkDirForce(absPath)
 	if err != nil {
-		return CategoryFileExporter{}, err
+		return &CategoryFileExporter{}, err
 	}
 
 	m := make(map[int]string)
-	return CategoryFileExporter{provider: provider, path: absPath, categoryIdFilePathMap: m}, err
+	return &CategoryFileExporter{provider: provider, path: absPath, categoryIdFilePathMap: m}, err
 }
 
-func (fe *CategoryFileExporter) export() (err error) {
+func (fe *CategoryFileExporter) Export() (err error) {
 	defer func() {
 
 	}()

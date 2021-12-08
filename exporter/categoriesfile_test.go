@@ -12,7 +12,7 @@ func TestCategoryFileExporter_export(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	err = exporter.export()
+	err = exporter.Export()
 	if err != nil {
 		panic(err)
 	}
