@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"errors"
-	"github.com/yangsx95/md-crawler/exporter"
-	"github.com/yangsx95/md-crawler/provider"
+	"github.com/yangsx95/markdown-tools/exporter"
+	"github.com/yangsx95/markdown-tools/provider"
 
 	"github.com/spf13/cobra"
 )

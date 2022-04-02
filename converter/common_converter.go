@@ -2,7 +2,7 @@ package converter
 
 import (
 	"fmt"
-	"github.com/yangsx95/md-crawler/util"
+	"github.com/yangsx95/markdown-tools/util"
 	"os"
 	"path/filepath"
 

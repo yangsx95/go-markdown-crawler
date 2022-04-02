@@ -2,9 +2,9 @@ package exporter
 
 import (
 	"fmt"
-	"github.com/yangsx95/md-crawler/converter"
-	"github.com/yangsx95/md-crawler/provider"
-	"github.com/yangsx95/md-crawler/util"
+	"github.com/yangsx95/markdown-tools/converter"
+	"github.com/yangsx95/markdown-tools/provider"
+	"github.com/yangsx95/markdown-tools/util"
 	"io/ioutil"
 	"path/filepath"
 	"strings"

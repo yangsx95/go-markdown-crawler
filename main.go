@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/yangsx95/md-crawler/cmd"
+	"github.com/yangsx95/markdown-tools/cmd"
 )
 
 func main() {
