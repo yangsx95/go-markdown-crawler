@@ -107,7 +107,7 @@ func ResourcePathContains(target []string, ele string) bool {
 	for _, t := range target {
 		trimT := strings.TrimSpace(t)
 		trimEle := strings.TrimSpace(ele)
-		if trimT == trimEle || url.PathEscape(trimT) == url.PathEscape(trimEle) {
+		if trimT == trimEle || url.PathEscape(trimT) == trimEle {
 			return true
 		}
 	}
