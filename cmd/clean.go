@@ -12,6 +12,19 @@ import (
 	"strings"
 )
 
+var ignoredDirs = []string{
+	".git",
+	".trash",
+	".idea",
+	".vscode",
+	".obsidian",
+}
+
+var ignoredFiles = []string{
+	".DS_Store",
+	".gitignore",
+}
+
 // cleanCmd 清理命令
 var cleanCmd = &cobra.Command{
 	Use:   "clean",
@@ -146,22 +159,40 @@ func getMdFileResource(mdPath string) ([]string, error) {
 	return result, nil
 }
 
+var processedFiles = make(map[string]bool)
+
 func getAllMdAndResourceFromDir(dir string) (mdPath []string, resPath []string, err error) {
 	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+
+		if err != nil {
+			fmt.Printf("Error accessing path: %v\n", err)
+			return err
+		}
+
+		// 跳过忽略的的文件夹
+		if d.IsDir() && isIgnoreDir(d.Name()) {
+			return filepath.SkipDir
+		}
+
+		// 文件夹不做任何处理
+		if d.IsDir() {
+			return err
+		}
+
+		// 忽略的文件不处理
+		if isIgnoredFile(d.Name()) {
+			return err
+		}
+
+		// 检查文件是否已经处理过
+		if processedFiles[path] {
+			return err
+		} else {
+			processedFiles[path] = true
+		}
+
 		path, err = filepath.Abs(path)
 		if err != nil {
-			return err
-		}
-		// 不处理文件夹
-		stat, err := os.Stat(path)
-		if err != nil {
-			return err
-		}
-		if stat.IsDir() {
-			return err
-		}
-		// 不处理.git文件夹下的文件, 以及.gitignore文件
-		if strings.Contains(path, string(os.PathSeparator)+".git"+string(os.PathSeparator)) || stat.Name() == ".gitignore" {
 			return err
 		}
 		info, _ := os.Stat(path)
@@ -176,4 +207,22 @@ func getAllMdAndResourceFromDir(dir string) (mdPath []string, resPath []string, 
 		return nil, nil, err
 	}
 	return mdPath, resPath, err
+}
+
+func isIgnoreDir(name string) bool {
+	for _, dir := range ignoredDirs {
+		if name == dir {
+			return true
+		}
+	}
+	return false
+}
+
+func isIgnoredFile(name string) bool {
+	for _, file := range ignoredFiles {
+		if strings.ToLower(name) == strings.ToLower(file) {
+			return true
+		}
+	}
+	return false
 }
